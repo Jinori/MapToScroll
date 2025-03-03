@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapToScroll", "MapToScroll\MapToScroll.csproj", "{32A64277-2892-424A-8710-F37631C5D99B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DALib", "..\..\dalib\DALib\DALib.csproj", "{D382DC4F-A8EE-4B69-A7FD-B31389F12BB8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{32A64277-2892-424A-8710-F37631C5D99B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32A64277-2892-424A-8710-F37631C5D99B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32A64277-2892-424A-8710-F37631C5D99B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32A64277-2892-424A-8710-F37631C5D99B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D382DC4F-A8EE-4B69-A7FD-B31389F12BB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D382DC4F-A8EE-4B69-A7FD-B31389F12BB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D382DC4F-A8EE-4B69-A7FD-B31389F12BB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D382DC4F-A8EE-4B69-A7FD-B31389F12BB8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

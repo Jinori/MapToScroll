@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net9.0-windows</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <UseWPF>true</UseWPF>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\dalib\DALib\DALib.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Assets\background.png" />
+      <EmbeddedResource Include="Assets\background.png" />
+      <None Remove="Assets\_nameplate.spf" />
+      <EmbeddedResource Include="Assets\_nameplate.spf" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
+    </ItemGroup>
+
+</Project>
