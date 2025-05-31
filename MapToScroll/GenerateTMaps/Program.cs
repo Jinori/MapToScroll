@@ -10,17 +10,19 @@ using DALib.Utility;
 using SkiaSharp;
 #endregion
 
-const string SEO_DAT_PATH = @"C:\Users\Despe\Desktop\Unora\Unora\seo.dat";
-const string IA_DAT_PATH = @"C:\Users\Despe\Desktop\Unora\Unora\ia.dat";
-const string JSON_DIR = @"D:\repos\Jinori\Unora\Data\Configuration\Templates\Maps";
-const string MAP_INSTANCES_DIR = @"D:\repos\Jinori\Unora\Data\Configuration\MapInstances";
+const string SEO_DAT_PATH = @"C:\Users\Admin\Documents\Unora\seo.dat";
+const string IA_DAT_PATH = @"C:\Users\Admin\Documents\Unora\ia.dat";
+const string JSON_DIR = @"C:\Users\Admin\Documents\GitHub\Unora\Data\Configuration\Templates\Maps";
+const string MAP_INSTANCES_DIR = @"C:\Users\Admin\Documents\GitHub\Unora\Data\Configuration\MapInstances";
 const string BACKGROUND_IMAGE_RESOURCE = "GenerateTMaps.Assets.background.png";
+const string DARKNESSBACKGROUND_IMAGE_RESOURCE = "GenerateTMaps.Assets.darknessbackground.png";
 const int FRAME_BACKGROUND_WIDTH = 568;
 const int FRAME_BACKGROUND_HEIGHT = 406;
 var someNumber = 0;
 
 var renderLock = new Lock();
 var backgroundImage = LoadEmbeddedBackgroundImage();
+var darknessBackgroundImage = LoadEmbeddedDarknessBackgroundImage();
 
 using var seoDat = DataArchive.FromFile(SEO_DAT_PATH);
 using var iaDat = DataArchive.FromFile(IA_DAT_PATH);
@@ -66,7 +68,7 @@ Parallel.ForEach(
         iaDat,
         mapImageCache));
 
-File.WriteAllText("tcoord.tbl", tCoordTextBuilder.ToString());
+File.WriteAllText("_tcoord.txt", tCoordTextBuilder.ToString());
 
 void ProcessMapFileAsync(
     string mapFilePath,
@@ -79,18 +81,43 @@ void ProcessMapFileAsync(
     MapImageCache localMapImageCache)
 {
     var mapNumber = ExtractMapNumber(mapFilePath);
-
     if (!mapNumber.HasValue)
         return;
 
+    var isDarknessMap = IsDarknessMap(mapNumber.Value);
+    var renderedMapFilePath = Path.Combine(localSaveDir, $"_t{mapNumber}.spf");
+    var nameplateFilePath = Path.Combine(localSaveDir, $"_t{mapNumber}n.spf");
+    
+    // Normal map processing
     var tileDimensions = LoadMapTileDimensions(mapNumber.Value);
-
     if (tileDimensions == null)
         return;
 
     var tileWidth = tileDimensions.Value.width;
     var tileHeight = tileDimensions.Value.height;
 
+    if (isDarknessMap)
+    {
+        // Convert to SPF and save
+        var darknessspfFile = SpfFile.FromImages(darknessBackgroundImage);
+        darknessspfFile.Save(renderedMapFilePath);
+
+        // Create nameplate SPF as usual
+        CopyAndRenameNameplate(nameplateFilePath);
+        
+        // Add Darkness map entry to tcoord.txt
+        var darkmapName = ExtractMapName(mapNumber.Value) ?? "Untitled" + mapNumber;
+        var darkxCoord = -((FRAME_BACKGROUND_WIDTH - 508) / 2);
+        var darkyCoord = (FRAME_BACKGROUND_HEIGHT - 260) / 2;
+        
+        var newEntrydark = $"{mapNumber} {Regex.Replace(darkmapName, @"\d", "")} {darkxCoord},{darkyCoord} {tileWidth} {tileHeight}";
+        
+        lock (localTCoordBuilder)
+            localTCoordBuilder.AppendLine(newEntrydark);
+        
+        return;
+    }
+    
     var map = MapFile.FromFile(mapFilePath, tileWidth, tileHeight);
     SKImage? renderedImage;
 
@@ -104,11 +131,7 @@ void ProcessMapFileAsync(
             0,
             localMapImageCache);
 
-    var renderedMapFilePath = Path.Combine(localSaveDir, $"_t{mapNumber}.spf");
-    var nameplateFilePath = Path.Combine(localSaveDir, $"_t{mapNumber}n.spf");
-
     var finalImage = OverlayMapOnBackground(renderedImage);
-
     if (finalImage == null)
         return;
 
@@ -125,7 +148,6 @@ void ProcessMapFileAsync(
 
     var newEntry = $"{mapNumber} {Regex.Replace(mapName, @"\d", "")} {xCoord},{yCoord} {tileWidth} {tileHeight}";
 
-    //stringbuilder is not threadsafe
     lock (localTCoordBuilder)
         localTCoordBuilder.AppendLine(newEntry);
     
@@ -221,6 +243,39 @@ static SKImage ResizeImage(SKImage image, int maxWidth, int maxHeight)
 #endregion
 
 #region Utility
+
+static bool IsDarknessMap(int mapNumber)
+{
+    foreach (var file in Directory.EnumerateFiles(MAP_INSTANCES_DIR, "instance.json", SearchOption.AllDirectories))
+    {
+        using var jsonStream = File.OpenRead(file);
+        var jsonObject = JsonSerializer.Deserialize<JsonObject>(jsonStream);
+
+        if (jsonObject == null)
+            continue;
+
+        if (!jsonObject.TryGetPropertyValue("templateKey", out var propertyNode))
+            continue;
+
+        var mapNumStr = propertyNode!.GetValue<string>();
+
+        if (string.IsNullOrEmpty(mapNumStr) || !int.TryParse(mapNumStr, out var mapNum) || mapNum != mapNumber)
+            continue;
+
+        if (jsonObject.TryGetPropertyValue("scriptKeys", out var scriptKeysNode) && scriptKeysNode is JsonArray scriptKeysArray)
+        {
+            foreach (var key in scriptKeysArray)
+            {
+                if (key?.GetValue<string>().Equals("darknessmap", StringComparison.OrdinalIgnoreCase) == true)
+                    return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+
 IEnumerable<int> GetUsedMapNumbers()
 {
     foreach (var file in Directory.EnumerateFiles(MAP_INSTANCES_DIR, "instance.json", SearchOption.AllDirectories))
@@ -272,6 +327,19 @@ static SKImage LoadEmbeddedBackgroundImage()
 
     if (stream == null)
         throw new FileNotFoundException("Embedded background image not found.");
+
+    using var skBitmap = SKBitmap.Decode(stream);
+
+    return SKImage.FromBitmap(skBitmap);
+}
+
+static SKImage LoadEmbeddedDarknessBackgroundImage()
+{
+    var assembly = Assembly.GetExecutingAssembly();
+    using var stream = assembly.GetManifestResourceStream(DARKNESSBACKGROUND_IMAGE_RESOURCE);
+
+    if (stream == null)
+        throw new FileNotFoundException("Embedded darkness background image not found.");
 
     using var skBitmap = SKBitmap.Decode(stream);
 

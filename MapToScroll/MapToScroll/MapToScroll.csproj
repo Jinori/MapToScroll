@@ -17,6 +17,8 @@
       <EmbeddedResource Include="Assets\background.png" />
       <None Remove="Assets\_nameplate.spf" />
       <EmbeddedResource Include="Assets\_nameplate.spf" />
+      <None Remove="Assets\darknessbackground.png" />
+      <EmbeddedResource Include="Assets\darknessbackground.png" />
     </ItemGroup>
 
     <ItemGroup>

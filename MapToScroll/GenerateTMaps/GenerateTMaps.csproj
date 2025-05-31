@@ -9,11 +9,16 @@
 
     <ItemGroup>
       <EmbeddedResource Include="Assets\background.png" />
+      <EmbeddedResource Include="Assets\darknessbackground.png" />
       <EmbeddedResource Include="Assets\_nameplate.spf" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\dalib\DALib\DALib.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.6.0" />
     </ItemGroup>
 
 </Project>
